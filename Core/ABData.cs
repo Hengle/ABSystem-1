@@ -25,7 +25,7 @@
         public override bool Equals(object obj)
         {
             AssetBundleInfo other = (AssetBundleInfo)obj;
-            if (this.Name.Equals(other.Name))
+            if (this.Name.Equals(other.Name) && this.Hash.Equals(other.Hash))
             {
                 return true;
             }

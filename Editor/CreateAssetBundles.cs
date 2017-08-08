@@ -1,16 +1,16 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using System.IO;
-using System.Collections.Generic;
 using LitJson;
 
 namespace ABSystem
 {
     public class CreateAssetBundles : EditorWindow
     {
-        private static bool ISCreateVersionInfo;
+        private static bool ISCreateVersionInfo = true;
         private static string Version;
-        private static bool IsCreateResourceList;
+        private static bool IsCreateResourceList = true;
+        private static string OutputPath = "AssetBundles";
 
         [MenuItem("ABSystem/Create AssetBundles")]
         static void ShowWindow()
@@ -21,58 +21,123 @@ namespace ABSystem
         private void OnGUI()
         {
             GUILayout.Label("Settings", EditorStyles.boldLabel);
+            GUILayout.Label(string.Format("Current Version: {0}", GetCurrentVersion()), EditorStyles.helpBox);
             ISCreateVersionInfo = EditorGUILayout.Toggle("Create Version Info", ISCreateVersionInfo);
-            if(ISCreateVersionInfo)
+            if (ISCreateVersionInfo)
             {
                 Version = EditorGUILayout.TextField("Version", Version);
             }
             IsCreateResourceList = EditorGUILayout.Toggle("Create Resource List", IsCreateResourceList);
-            if(GUILayout.Button("Create"))
+            if (GUILayout.Button("Create"))
             {
                 Create();
+            }
+            if (GUILayout.Button("Clear"))
+            {
+                Clear();
             }
 
         }
 
-        void Create()
+        private string GetCurrentVersion()
         {
-            string path = "AssetBundles";
-            if (!Directory.Exists(path))
+            string filePath = Path.Combine(OutputPath, "Version.json");
+            if (!File.Exists(filePath))
             {
-                Directory.CreateDirectory(path);
+                return "UnKnow";
             }
-            BuildPipeline.BuildAssetBundles(path, BuildAssetBundleOptions.None, BuildTarget.StandaloneWindows64);
-            if(IsCreateResourceList)
+            else
             {
-                // 生成ResourceList.json信息
-                var assetBundle = AssetBundle.LoadFromFile(Path.Combine(path, "AssetBundles"));
-                var manifest = assetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-                string[] assetName = manifest.GetAllAssetBundles();
-                JsonData jsonList = new JsonData();
-                foreach (var assetBundleName in assetName)
+                using (StreamReader sr = new StreamReader(filePath))
                 {
-                    var tempJson = new JsonData();
-                    tempJson["Name"] = assetBundleName;
-                    tempJson["Hash"] = manifest.GetAssetBundleHash(assetBundleName).ToString();
-                    jsonList.Add(tempJson);
-                }
-                string jsonStr = jsonList.ToJson();
-                using (StreamWriter sw = new StreamWriter(Path.Combine(path, "ResourceList.json")))
-                {
-                    sw.Write(jsonStr);
+                    return JsonMapper.ToObject<VersionInfo>(sr.ReadToEnd()).Version;
                 }
             }
-            if(ISCreateVersionInfo)
+        }
+
+        private void Create()
+        {
+            if (!Directory.Exists(OutputPath))
+            {
+                Directory.CreateDirectory(OutputPath);
+                var manifest = BuildPipeline.BuildAssetBundles(OutputPath, BuildAssetBundleOptions.None, BuildTarget.StandaloneWindows64);
+                if(manifest)
+                {
+                    CreateResourceListJsonFile(manifest);
+                    CreateVersionJsonFile();
+                }
+                else
+                {
+                    Clear();
+                }
+                
+            }
+            else
+            {
+                var ab = AssetBundle.LoadFromFile(Path.Combine(OutputPath, "AssetBundles"));
+                var oldManifest = ab.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                var oldABList = ABUtility.CreateABListFromManifest(oldManifest);
+                ab.Unload(true);
+                var newManifest = BuildPipeline.BuildAssetBundles(OutputPath, BuildAssetBundleOptions.None, BuildTarget.StandaloneWindows64);
+                if(newManifest)
+                {
+                    CreateResourceListJsonFile(newManifest);
+                    CreateVersionJsonFile();
+                    var newABList = ABUtility.CreateABListFromManifest(newManifest);
+                    var deleteList = ABUtility.GetDeleteABList(oldABList, newABList);
+                    foreach (var abinfo in deleteList)
+                    {
+                        File.Delete(Path.Combine(OutputPath,abinfo.Name));
+                        File.Delete(Path.Combine(OutputPath, abinfo.Name + ".manifest"));
+                    }
+                }
+                else
+                {
+                    Clear();
+                }
+            }
+            
+        }
+
+        /// <summary>
+        /// 生成Version.json信息
+        /// </summary>
+        private void CreateVersionJsonFile()
+        {
+            if (ISCreateVersionInfo)
             {
                 JsonData versionJson = new JsonData();
                 versionJson["Version"] = Version;
                 string versionJsonStr = JsonMapper.ToJson(versionJson);
-                using (StreamWriter sw = new StreamWriter(Path.Combine(path, "Version.json")))
+                using (StreamWriter sw = new StreamWriter(Path.Combine(OutputPath, "Version.json")))
                 {
                     sw.Write(versionJsonStr);
                 }
             }
-            // 生成Version.json信息
+        }
+
+        /// <summary>
+        /// 生成ResourceList.json信息
+        /// </summary>
+        private void CreateResourceListJsonFile(AssetBundleManifest manifest)
+        {
+            if (IsCreateResourceList)
+            {
+                var abList = ABUtility.CreateABListFromManifest(manifest);
+                string jsonStr = JsonMapper.ToJson(abList);
+                using (StreamWriter sw = new StreamWriter(Path.Combine(OutputPath, "ResourceList.json")))
+                {
+                    sw.Write(jsonStr);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 清空输出目录
+        /// </summary>
+        private void Clear()
+        {
+            Directory.Delete(OutputPath, true);
         }
     }
 

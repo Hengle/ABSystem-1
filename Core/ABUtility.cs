@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using LitJson;
+using UnityEngine;
 
 namespace ABSystem
 {
@@ -31,6 +33,40 @@ namespace ABSystem
             }
             return aseetBundleList;
         }
+
+        /// <summary>
+        /// 从AssetBundles.manifest中, 生成ab包信息
+        /// </summary>
+        /// <param name="assetBundlePath"></param>
+        /// <returns></returns>
+        public static List<AssetBundleInfo> CreateABListFromManifest(AssetBundleManifest manifest)
+        {
+            string[] assetName = manifest.GetAllAssetBundles();
+            var assetBundleList = new List<AssetBundleInfo>();
+            foreach (var assetBundleName in assetName)
+            {
+                var abinfo = new AssetBundleInfo()
+                {
+                    Name = assetBundleName,
+                    Hash = manifest.GetAssetBundleHash(assetBundleName).ToString()
+                };
+                assetBundleList.Add(abinfo);
+            }
+            return assetBundleList;
+        }
+
+        /// <summary>
+        /// 获取删除列表
+        /// </summary>
+        /// <param name="oldList"></param>
+        /// <param name="newList"></param>
+        /// <returns></returns>
+        public static IEnumerable<AssetBundleInfo> GetDeleteABList(List<AssetBundleInfo> oldList, List<AssetBundleInfo> newList)
+        {
+            var deleteList = oldList.Except(newList);
+            return deleteList;
+        }
+
     }
 }
 
