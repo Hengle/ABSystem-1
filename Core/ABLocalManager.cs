@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using LitJson;
 using UnityEngine;
 
 namespace ABSystem
 {
-    [System.Serializable]
+    [Serializable]
     public class ABLocalSetting
     {
         public string AssetBundlePath = "AssetBundles"; // 本地储存根目录名称

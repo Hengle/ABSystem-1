@@ -39,7 +39,7 @@ namespace ABSystem
 
         }
 
-        private string GetCurrentVersion()
+        private static string GetCurrentVersion()
         {
             string filePath = Path.Combine(OutputPath, "Version.json");
             if (!File.Exists(filePath))
@@ -57,10 +57,18 @@ namespace ABSystem
 
         private void Create()
         {
+            if (string.IsNullOrEmpty(Version))
+            {
+                throw new InvalidDataException("必须填写版本号");
+            }
+            if(Version == GetCurrentVersion())
+            {
+                Debug.LogWarning("不使用新的版本号将导致新的版本无法被察觉, 从而导致无法升级");
+            }
             if (!Directory.Exists(OutputPath))
             {
                 Directory.CreateDirectory(OutputPath);
-                var manifest = BuildPipeline.BuildAssetBundles(OutputPath, BuildAssetBundleOptions.None, BuildTarget.StandaloneWindows64);
+                var manifest = BuildPipeline.BuildAssetBundles(OutputPath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
                 if(manifest)
                 {
                     CreateResourceListJsonFile(manifest);
@@ -78,7 +86,7 @@ namespace ABSystem
                 var oldManifest = ab.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
                 var oldABList = ABUtility.CreateABListFromManifest(oldManifest);
                 ab.Unload(true);
-                var newManifest = BuildPipeline.BuildAssetBundles(OutputPath, BuildAssetBundleOptions.None, BuildTarget.StandaloneWindows64);
+                var newManifest = BuildPipeline.BuildAssetBundles(OutputPath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
                 if(newManifest)
                 {
                     CreateResourceListJsonFile(newManifest);

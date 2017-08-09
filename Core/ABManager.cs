@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -24,8 +23,8 @@ namespace ABSystem
         private void Awake()
         {
             Instance = this;
-            remoteManager = new ABRemoteManager(RemoteSetting);
             localManager = new ABLocalManager(LocalSetting);
+            remoteManager = new ABRemoteManager(RemoteSetting, localManager);
         }
 
         private void Start()
@@ -69,7 +68,7 @@ namespace ABSystem
                                  select remoteab;
                 }
                 // 开始下载
-                remoteManager.DownloadAssetBundle(updateList, localManager);
+                remoteManager.DownloadAssetBundles(updateList, remoteVersion);
                 // 清空本地不用的ab包
                 localManager.Clear(ABUtility.GetDeleteABList(localAssetBundleList, remoteAssetBundleList));
                 // 写入新的信息文件

@@ -1,11 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace ABSystem
 {
-    [System.Serializable]
+    [Serializable]
     public class ABRemoteSetting
     {
         public string RemoteVersionURI; // 获取远程版本号的uri
@@ -15,11 +15,13 @@ namespace ABSystem
 
     public class ABRemoteManager
     {
-        private ABRemoteSetting Setting;
+        private ABRemoteSetting setting;
+        private ABLocalManager localManager;
 
-        public ABRemoteManager(ABRemoteSetting setting)
+        public ABRemoteManager(ABRemoteSetting setting, ABLocalManager localManager)
         {
-            Setting = setting;
+            this.setting = setting;
+            this.localManager = localManager;
         }
 
         /// <summary>
@@ -31,7 +33,7 @@ namespace ABSystem
             {
                 using (var webClient = new WebClient())
                 {
-                    Stream stream = webClient.OpenRead(Setting.RemoteVersionURI);
+                    Stream stream = webClient.OpenRead(setting.RemoteVersionURI);
                     StreamReader sr = new StreamReader(stream);
                     return ABUtility.JsonToVersion(sr.ReadToEnd());
                 }
@@ -47,7 +49,7 @@ namespace ABSystem
             {
                 using (var webClient = new WebClient())
                 {
-                    Stream stream = webClient.OpenRead(Setting.RemoteAssetBundleListURI);
+                    Stream stream = webClient.OpenRead(setting.RemoteAssetBundleListURI);
                     StreamReader sr = new StreamReader(stream);
                     return ABUtility.JsonToAseetBundleList(sr.ReadToEnd());
                 }
@@ -59,20 +61,39 @@ namespace ABSystem
         /// </summary>
         /// <param name="uri"></param>
         /// <param name="storagPath"></param>
-        public void DownloadAssetBundle(IEnumerable<AssetBundleInfo> assetBundleinfo, ABLocalManager localManager)
+        public void DownloadAssetBundles(IEnumerable<AssetBundleInfo> assetBundleinfo, string version)
         {
+            foreach (var abinfo in assetBundleinfo)
+            {
+                DownloadAssetBundle(abinfo);           
+            }
+            // 下载主AssetBundles包
+            var mainFilePath = localManager.TryCreateDirectory("AssetBundles");
             using (var webClient = new WebClient())
             {
-                foreach(var abinfo in assetBundleinfo)
-                {
-                    var filePath = localManager.TryCreateDirectory(abinfo);
-                    webClient.DownloadFile(string.Format("{0}/{1}", Setting.RemoteAssetBundleDownloadEntry, abinfo.Name), filePath);
-                    webClient.DownloadFile(string.Format("{0}/{1}", Setting.RemoteAssetBundleDownloadEntry, abinfo.Name + ".manifest"), filePath + ".manifest");
-                }
-                // 下载主AssetBundles包
-                var mainFilePath = localManager.TryCreateDirectory("AssetBundles");
-                webClient.DownloadFile(string.Format("{0}/{1}", Setting.RemoteAssetBundleDownloadEntry, "AssetBundles"), mainFilePath);
-                webClient.DownloadFile(string.Format("{0}/{1}", Setting.RemoteAssetBundleDownloadEntry, "AssetBundles.manifest"), mainFilePath + ".manifest");
+                var mainUri = new Uri(string.Format("{0}?type={1}&Name={2}&Version={3}", setting.RemoteAssetBundleDownloadEntry, "MainAssetBundles", "AssetBundles", version));
+                webClient.DownloadFile(mainUri, mainFilePath);
+                
+            }
+            using (var webClient = new WebClient())
+            {
+                var mfUri = new Uri(string.Format("{0}?type={1}&Name={2}", setting.RemoteAssetBundleDownloadEntry, "MainManifest", "AssetBundles"));
+                webClient.DownloadFileAsync(mfUri, mainFilePath + ".manifest");
+            }
+        }
+
+        private void DownloadAssetBundle(AssetBundleInfo abInfo)
+        {
+            var filePath = localManager.TryCreateDirectory(abInfo);
+            using (var webClient = new WebClient())
+            {
+                var abUri = new Uri(string.Format("{0}?type={1}&Name={2}&Hash={3}", setting.RemoteAssetBundleDownloadEntry, "AssetBundle", abInfo.Name, abInfo.Hash));
+                webClient.DownloadFileAsync(abUri, filePath);
+            }
+            using (var webClient = new WebClient())
+            {
+                var abManifestUri = new Uri(string.Format("{0}?type={1}&Name={2}", setting.RemoteAssetBundleDownloadEntry, "Manifest", abInfo.Name));
+                webClient.DownloadFileAsync(abManifestUri, filePath + ".manifest");
             }
         }
 
