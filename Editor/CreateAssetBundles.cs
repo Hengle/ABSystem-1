@@ -73,6 +73,7 @@ namespace ABSystem
                 {
                     CreateResourceListJsonFile(manifest);
                     CreateVersionJsonFile();
+                    ABLocalManager.ClearEmtry(OutputPath);
                 }
                 else
                 {
@@ -93,11 +94,12 @@ namespace ABSystem
                     CreateVersionJsonFile();
                     var newABList = ABUtility.CreateABListFromManifest(newManifest);
                     var deleteList = ABUtility.GetDeleteABList(oldABList, newABList);
-                    foreach (var abinfo in deleteList)
+                    foreach (var name in deleteList)
                     {
-                        File.Delete(Path.Combine(OutputPath,abinfo.Name));
-                        File.Delete(Path.Combine(OutputPath, abinfo.Name + ".manifest"));
+                        File.Delete(Path.Combine(OutputPath, name));
+                        File.Delete(Path.Combine(OutputPath, name + ".manifest"));
                     }
+                    ABLocalManager.ClearEmtry(OutputPath);
                 }
                 else
                 {

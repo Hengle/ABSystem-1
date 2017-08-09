@@ -61,9 +61,16 @@ namespace ABSystem
         /// <param name="oldList"></param>
         /// <param name="newList"></param>
         /// <returns></returns>
-        public static IEnumerable<AssetBundleInfo> GetDeleteABList(List<AssetBundleInfo> oldList, List<AssetBundleInfo> newList)
+        public static IEnumerable<string> GetDeleteABList(List<AssetBundleInfo> oldList, List<AssetBundleInfo> newList)
         {
-            var deleteList = oldList.Except(newList);
+            var ol = from o in oldList
+                     select o.Name;
+            var nl = from n in newList
+                     select n.Name;
+            var deleteList = from o in ol
+                             from n in nl
+                             where !nl.Contains(o)
+                             select o;
             return deleteList;
         }
 

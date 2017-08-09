@@ -129,17 +129,26 @@ namespace ABSystem
         /// 清除不再使用的ab包
         /// </summary>
         /// <param name="deleteList"></param>
-        public void Clear(IEnumerable<AssetBundleInfo> deleteList)
+        public void Clear(IEnumerable<string> deleteList)
         {
-            foreach (var abinfo in deleteList)
+            foreach (var name in deleteList)
             {
-                File.Delete(Path.Combine(localAssetBundlePath, abinfo.Name));
-                File.Delete(Path.Combine(localAssetBundlePath, abinfo.Name + ".manifest"));
+                File.Delete(Path.Combine(localAssetBundlePath, name));
+                File.Delete(Path.Combine(localAssetBundlePath, name + ".manifest"));
             }
             // 清除空目录
-            DirectoryInfo dir = new DirectoryInfo(localAssetBundlePath);
+            ClearEmtry(localAssetBundlePath);
+        }
+
+        /// <summary>
+        /// 清除根目录下的所有空目录
+        /// </summary>
+        /// <param name="rootPath"></param>
+        public static void ClearEmtry(string rootPath)
+        {
+            DirectoryInfo dir = new DirectoryInfo(rootPath);
             DirectoryInfo[] dirs = dir.GetDirectories("*", SearchOption.AllDirectories);
-            foreach(DirectoryInfo subDir in dirs)
+            foreach (DirectoryInfo subDir in dirs)
             {
                 FileSystemInfo[] subFiles = subDir.GetFileSystemInfos();
                 if (subFiles.Length == 0)
