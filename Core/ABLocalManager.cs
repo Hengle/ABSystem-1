@@ -21,19 +21,19 @@ namespace ABSystem
         private string localAssetBundlePath;
         private string versionPath;
         private string assetBundleListPath;
-        private ABLocalSetting setting;
 
         public ABLocalManager(ABLocalSetting setting)
         {
-            this.setting = setting;
+            // 初始化储存目录
             localAssetBundlePath = Path.Combine(Application.persistentDataPath, setting.AssetBundlePath);
             DirectoryInfo dir = new DirectoryInfo(localAssetBundlePath);
-            if(!dir.Exists)
-            {
-                dir.Create();
-            }
+            if (!dir.Exists) dir.Create();
+            // 初始化Version.json文件
             versionPath = Path.Combine(localAssetBundlePath, "Version.json");
+            if (!File.Exists(versionPath)) Version = setting.DefaultVersion;
+            // 初始化ResourceList.json文件
             assetBundleListPath = Path.Combine(localAssetBundlePath, "ResourceList.json");
+            if (!File.Exists(assetBundleListPath)) AseetBundleList = new List<ABInfo>();
         }
 
         /// <summary>
@@ -43,13 +43,9 @@ namespace ABSystem
         {
             get
             {
-                if(!File.Exists(versionPath))
+                using (StreamReader sr = new StreamReader(versionPath))
                 {
-                    Version = setting.DefaultVersion;
-                }
-                using (StreamReader st = new StreamReader(versionPath))
-                {
-                    string jsonStr = st.ReadLine();
+                    string jsonStr = sr.ReadLine();
                     return ABUtility.JsonToVersion(jsonStr);
                 }
             }
@@ -57,7 +53,7 @@ namespace ABSystem
             {
                 using (var sw = new StreamWriter(versionPath))
                 {
-                    VersionInfo v = new VersionInfo()
+                    ABVersion v = new ABVersion()
                     {
                         Version = value
                     };
@@ -69,18 +65,14 @@ namespace ABSystem
         /// <summary>
         /// 本地ab包的信息列表相关
         /// </summary>
-        public List<AssetBundleInfo> AseetBundleList
+        public List<ABInfo> AseetBundleList
         {
             get
             {
-                if (!File.Exists(assetBundleListPath))
-                {
-                    AseetBundleList = new List<AssetBundleInfo>();
-                }
                 using (StreamReader st = new StreamReader(assetBundleListPath))
                 {
                     string localABInfo = st.ReadToEnd();
-                    var localAseetBundleList = ABUtility.JsonToAseetBundleList(localABInfo);
+                    var localAseetBundleList = ABUtility.JsonToABList(localABInfo);
                     return localAseetBundleList;
                 }
             }
@@ -98,15 +90,9 @@ namespace ABSystem
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public string TryCreateDirectory(AssetBundleInfo abinfo)
+        public string TryCreateDirectory(ABInfo abinfo)
         {
-            string filePath = Path.Combine(localAssetBundlePath, abinfo.Name);
-            DirectoryInfo dir = new DirectoryInfo(Path.GetDirectoryName(filePath));
-            if(!dir.Exists)
-            {
-                dir.Create();
-            }
-            return filePath;
+            return TryCreateDirectory(abinfo.Name);
         }
 
         /// <summary>
@@ -118,10 +104,7 @@ namespace ABSystem
         {
             string filePath = Path.Combine(localAssetBundlePath, path);
             DirectoryInfo dir = new DirectoryInfo(Path.GetDirectoryName(filePath));
-            if (!dir.Exists)
-            {
-                dir.Create();
-            }
+            if (!dir.Exists) dir.Create();
             return filePath;
         }
 
@@ -151,12 +134,10 @@ namespace ABSystem
             foreach (DirectoryInfo subDir in dirs)
             {
                 FileSystemInfo[] subFiles = subDir.GetFileSystemInfos();
-                if (subFiles.Length == 0)
-                {
-                    subDir.Delete();
-                }
+                if (subFiles.Length == 0) subDir.Delete();
             }
         }
+
     }
 }
 

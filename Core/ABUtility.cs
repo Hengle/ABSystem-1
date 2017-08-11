@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using LitJson;
 using UnityEngine;
+
 
 namespace ABSystem
 {
@@ -14,7 +16,8 @@ namespace ABSystem
         /// <returns></returns>
         public static string JsonToVersion(string jsonString)
         {
-            var versionInfo = JsonMapper.ToObject<VersionInfo>(jsonString);
+            var versionInfo = JsonMapper.ToObject<ABVersion>(jsonString);
+            if (versionInfo == null) throw new ABVersionJsonException("The json data about version can not parse.");
             return versionInfo.Version;
         }
 
@@ -23,13 +26,14 @@ namespace ABSystem
         /// </summary>
         /// <param name="jsonString"></param>
         /// <returns></returns>
-        public static List<AssetBundleInfo> JsonToAseetBundleList(string jsonString)
+        public static List<ABInfo> JsonToABList(string jsonString)
         {
-            var aseetBundleList = new List<AssetBundleInfo>();
+            var aseetBundleList = new List<ABInfo>();
             JsonData JsonList = JsonMapper.ToObject(jsonString);
+            if (JsonList == null) throw new ABInfoListJsonException("The json date about resource can not parse.");
             foreach (JsonData item in JsonList)
             {
-                aseetBundleList.Add(JsonMapper.ToObject<AssetBundleInfo>(item.ToJson()));
+                aseetBundleList.Add(JsonMapper.ToObject<ABInfo>(item.ToJson()));
             }
             return aseetBundleList;
         }
@@ -39,16 +43,16 @@ namespace ABSystem
         /// </summary>
         /// <param name="assetBundlePath"></param>
         /// <returns></returns>
-        public static List<AssetBundleInfo> CreateABListFromManifest(AssetBundleManifest manifest)
+        public static List<ABInfo> CreateABListFromManifest(AssetBundleManifest manifest)
         {
-            string[] assetName = manifest.GetAllAssetBundles();
-            var assetBundleList = new List<AssetBundleInfo>();
-            foreach (var assetBundleName in assetName)
+            string[] assetBundleNames = manifest.GetAllAssetBundles();
+            var assetBundleList = new List<ABInfo>();
+            foreach (var name in assetBundleNames)
             {
-                var abinfo = new AssetBundleInfo()
+                var abinfo = new ABInfo()
                 {
-                    Name = assetBundleName,
-                    Hash = manifest.GetAssetBundleHash(assetBundleName).ToString()
+                    Name = name,
+                    Hash = manifest.GetAssetBundleHash(name).ToString()
                 };
                 assetBundleList.Add(abinfo);
             }
@@ -61,7 +65,7 @@ namespace ABSystem
         /// <param name="oldList"></param>
         /// <param name="newList"></param>
         /// <returns></returns>
-        public static IEnumerable<string> GetDeleteABList(List<AssetBundleInfo> oldList, List<AssetBundleInfo> newList)
+        public static IEnumerable<string> GetDeleteABList(IEnumerable<ABInfo> oldList, IEnumerable<ABInfo> newList)
         {
             var ol = from o in oldList
                      select o.Name;

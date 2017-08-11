@@ -2,6 +2,8 @@
 using System.IO;
 using System.Net;
 using System.Collections.Generic;
+using System.ComponentModel;
+using UnityEngine;
 
 namespace ABSystem
 {
@@ -17,6 +19,13 @@ namespace ABSystem
     {
         private ABRemoteSetting setting;
         private ABLocalManager localManager;
+        private bool IsCheckSize;
+
+        public Queue<ABDownloadItem> DownloadQueue { get; private set; }
+        public ABDownloadItem CurrentDownloadItem { get; private set; }
+
+        public long TotalBytes { get; private set; }
+        public long BytesReceive { get; private set; }
 
         public ABRemoteManager(ABRemoteSetting setting, ABLocalManager localManager)
         {
@@ -43,7 +52,7 @@ namespace ABSystem
         /// <summary>
         /// 远程ab包信息列表
         /// </summary>
-        public List<AssetBundleInfo> AseetBundleList
+        public List<ABInfo> AseetBundleList
         {
             get
             {
@@ -51,51 +60,178 @@ namespace ABSystem
                 {
                     Stream stream = webClient.OpenRead(setting.RemoteAssetBundleListURI);
                     StreamReader sr = new StreamReader(stream);
-                    return ABUtility.JsonToAseetBundleList(sr.ReadToEnd());
+                    return ABUtility.JsonToABList(sr.ReadToEnd());
                 }
             }
         }
 
         /// <summary>
-        /// 下载ab包
+        /// 设置下载队列
+        /// </summary>
+        /// <param name="downloadABList"></param>
+        public void SetDownloadQueue(IEnumerable<ABInfo> downloadABList)
+        {
+            DownloadQueue = new Queue<ABDownloadItem>();
+            foreach (var abinfo in downloadABList)
+            {
+                var abItem = new ABDownloadItem()
+                {
+                    Name = abinfo.Name,
+                    Hash = abinfo.Hash
+                };
+                DownloadQueue.Enqueue(abItem);
+                var abmfItem = new ABDownloadItem()
+                {
+                    Name = abinfo.Name + ".manifest",
+                    Hash = abinfo.Hash
+                };
+
+                DownloadQueue.Enqueue(abmfItem);
+            }
+            var abMainItem = new ABDownloadItem()
+            {
+                Name = "AssetBundles"
+            };
+            DownloadQueue.Enqueue(abMainItem);
+            var abmfMainItem = new ABDownloadItem()
+            {
+                Name = "AssetBundles.manifest"
+            };
+            DownloadQueue.Enqueue(abmfMainItem);
+        }
+
+        /// <summary>
+        /// 获取需要下载的字节数, 注意, 这里使用HEAD的方式, 且使用了http 1.0的版本
+        /// </summary>
+        /// <param name="downloadQueue"></param>
+        /// <returns></returns>
+        public long GetDownloadSize()
+        {
+            // 检查各ab包的大小
+            long downloadSize = 0;
+            foreach(var item in DownloadQueue)
+            {
+                var abRequest = WebRequest.Create(GetABDownloadUri(item));
+                abRequest.Method = "HEAD";
+                using (var response = abRequest.GetResponse())
+                {
+                    var size = response.ContentLength;
+                    item.TotalBytesToReceive = size;
+                    downloadSize += size;
+                }
+            }
+            TotalBytes = downloadSize;
+            IsCheckSize = true;
+            return downloadSize;
+        }
+
+        /// <summary>
+        /// 获取AssetBundle下载的uri
+        /// </summary>
+        /// <param name="abinfo"></param>
+        /// <returns></returns>
+        private Uri GetABDownloadUri(ABInfo abinfo)
+        {
+            return GetABDownloadUri(abinfo.Name);
+        }
+
+        /// <summary>
+        /// 获取AssetBundle下载的uri
+        /// </summary>
+        /// <param name="abinfo"></param>
+        /// <returns></returns>
+        private Uri GetABDownloadUri(string name)
+        {
+            var uri = new Uri(string.Format("{0}?Name={1}", setting.RemoteAssetBundleDownloadEntry, name));
+            return uri;
+        }
+
+        /// <summary>
+        /// 获取AssetBundle的 .manifest 的下载uri
+        /// </summary>
+        /// <param name="abinfo"></param>
+        /// <returns></returns>
+        private Uri GetABMFDownloadUri(ABInfo abinfo)
+        {
+            return GetABMFDownloadUri(abinfo.Name);
+        }
+
+        /// <summary>
+        /// 获取AssetBundle的 .manifest 的下载uri
+        /// </summary>
+        /// <param name="abinfo"></param>
+        /// <returns></returns>
+        private Uri GetABMFDownloadUri(string name)
+        {
+            var uri = new Uri(string.Format("{0}?Name={1}", setting.RemoteAssetBundleDownloadEntry, name + ".manifest"));
+            return uri;
+        }
+
+        /// <summary>
+        /// 开始下载ab包
         /// </summary>
         /// <param name="uri"></param>
         /// <param name="storagPath"></param>
-        public void DownloadAssetBundles(IEnumerable<AssetBundleInfo> assetBundleinfo, string version)
+        public void StartDownload()
         {
-            foreach (var abinfo in assetBundleinfo)
+            if (!IsCheckSize) GetDownloadSize();
+            if(DownloadQueue.Count > 0)
             {
-                DownloadAssetBundle(abinfo);           
+                CurrentDownloadItem = DownloadQueue.Dequeue();
+                Download();
             }
-            // 下载主AssetBundles包
-            var mainFilePath = localManager.TryCreateDirectory("AssetBundles");
+            
+        }
+
+        /// <summary>
+        /// 异步下载ab包
+        /// </summary>
+        private void Download()
+        {
+            var abUri = GetABDownloadUri(CurrentDownloadItem);
+            var abPath = localManager.TryCreateDirectory(CurrentDownloadItem);
             using (var webClient = new WebClient())
             {
-                var mainUri = new Uri(string.Format("{0}?type={1}&Name={2}&Version={3}", setting.RemoteAssetBundleDownloadEntry, "MainAssetBundles", "AssetBundles", version));
-                webClient.DownloadFile(mainUri, mainFilePath);
-                
-            }
-            using (var webClient = new WebClient())
-            {
-                var mfUri = new Uri(string.Format("{0}?type={1}&Name={2}", setting.RemoteAssetBundleDownloadEntry, "MainManifest", "AssetBundles"));
-                webClient.DownloadFileAsync(mfUri, mainFilePath + ".manifest");
+                webClient.DownloadFileCompleted += ABDownloadCompleted;
+                webClient.DownloadProgressChanged += ABDownlaodProgressChanged;
+                webClient.DownloadFileAsync(abUri, abPath);
             }
         }
 
-        private void DownloadAssetBundle(AssetBundleInfo abInfo)
+        /// <summary>
+        /// 异步下载完成时
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ABDownloadCompleted(object sender, AsyncCompletedEventArgs e)
         {
-            var filePath = localManager.TryCreateDirectory(abInfo);
-            using (var webClient = new WebClient())
+            if (e.Error != null) throw e.Error;
+            BytesReceive += CurrentDownloadItem.TotalBytesToReceive;
+            try
             {
-                var abUri = new Uri(string.Format("{0}?type={1}&Name={2}&Hash={3}", setting.RemoteAssetBundleDownloadEntry, "AssetBundle", abInfo.Name, abInfo.Hash));
-                webClient.DownloadFileAsync(abUri, filePath);
+                CurrentDownloadItem = DownloadQueue.Dequeue();
+                Download();
             }
-            using (var webClient = new WebClient())
+            catch(InvalidOperationException)
             {
-                var abManifestUri = new Uri(string.Format("{0}?type={1}&Name={2}", setting.RemoteAssetBundleDownloadEntry, "Manifest", abInfo.Name));
-                webClient.DownloadFileAsync(abManifestUri, filePath + ".manifest");
+                CurrentDownloadItem = null;
             }
+            
         }
+
+        /// <summary>
+        /// 异步下载进度改变时
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ABDownlaodProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
+            CurrentDownloadItem.BytesReceived = e.BytesReceived;
+            CurrentDownloadItem.ProgressPercentage = e.ProgressPercentage;
+        }
+
+
+        
 
 
     }

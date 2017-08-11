@@ -50,7 +50,7 @@ namespace ABSystem
             {
                 using (StreamReader sr = new StreamReader(filePath))
                 {
-                    return JsonMapper.ToObject<VersionInfo>(sr.ReadToEnd()).Version;
+                    return JsonMapper.ToObject<ABVersion>(sr.ReadToEnd()).Version;
                 }
             }
         }

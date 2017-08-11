@@ -1,38 +1,26 @@
 ﻿namespace ABSystem
 {
-    public class VersionInfo
+    public class ABVersion
     {
         public string Version;
     }
 
-    public class AssetBundleInfo
+    public class ABInfo
     {
         public string Name;
         public string Hash;
 
-        public bool HasNewVersion(AssetBundleInfo abinfo)
+        public bool HasNewVersion(ABInfo abinfo)
         {
-            if(this.Name == abinfo.Name && this.Hash != abinfo.Hash)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return Name == abinfo.Name && Hash != abinfo.Hash;
         }
 
         public override bool Equals(object obj)
         {
-            AssetBundleInfo other = (AssetBundleInfo)obj;
-            if (this.Name.Equals(other.Name) && this.Hash.Equals(other.Hash))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            if (obj == null) return false;
+            ABInfo other = obj as ABInfo;
+            if (obj == null) return false;
+            return Name.Equals(other.Name) && Hash.Equals(other.Hash);
         }
 
         public override int GetHashCode()
@@ -45,4 +33,12 @@
             return string.Format("{0}: {1}", Name, Hash);
         }
     }
+
+    public class ABDownloadItem : ABInfo
+    {
+        public long TotalBytesToReceive; // 总大小
+        public long BytesReceived;  // 已经接收的大小
+        public long ProgressPercentage; // 进度
+    }
+
 }
