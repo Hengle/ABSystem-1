@@ -112,17 +112,50 @@ namespace ABSystem
             long downloadSize = 0;
             foreach(var item in DownloadQueue)
             {
-                var abRequest = WebRequest.Create(GetABDownloadUri(item));
-                abRequest.Method = "HEAD";
-                using (var response = abRequest.GetResponse())
+                var abRequest = new HttpWebRequest(GetABDownloadUri(item))
                 {
-                    var size = response.ContentLength;
-                    item.TotalBytesToReceive = size;
-                    downloadSize += size;
+                    Method = "HEAD",
+                    AllowAutoRedirect = false
+                };
+                using (var response = abRequest.GetResponse() as HttpWebResponse)
+                {
+                    // 200时直接得到大小
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var size = response.ContentLength;
+                        item.TotalBytesToReceive = size;
+                        downloadSize += size;
+                    }
+                    // 支持301和302重定向
+                    if(response.StatusCode == HttpStatusCode.Moved || response.StatusCode == HttpStatusCode.Redirect)
+                    {
+                        var size = GetDownloadSizeFollowRedirect(response);
+                        item.TotalBytesToReceive = size;
+                        downloadSize += size;
+                    }
                 }
             }
             TotalBytes = downloadSize;
             IsCheckSize = true;
+        }
+
+        /// <summary>
+        /// 更跟随重定向, 并继续用HEAD方法请求
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        private long GetDownloadSizeFollowRedirect(WebResponse response)
+        {
+            var rdRequest = new HttpWebRequest(new Uri(response.Headers["Location"]))
+            {
+                Method = "HEAD",
+                AllowAutoRedirect = false
+            };
+            using (var rdResponse = rdRequest.GetResponse())
+            {
+                var size = rdResponse.ContentLength;
+                return size;
+            }
         }
 
         /// <summary>
@@ -143,27 +176,6 @@ namespace ABSystem
         private Uri GetABDownloadUri(string name, string version)
         {
             var uri = new Uri(string.Format("{0}?Name={1}&Version={2}", setting.RemoteAssetBundleDownloadEntry, name, version));
-            return uri;
-        }
-
-        /// <summary>
-        /// 获取AssetBundle的 .manifest 的下载uri
-        /// </summary>
-        /// <param name="abinfo"></param>
-        /// <returns></returns>
-        private Uri GetABMFDownloadUri(ABDownloadItem item)
-        {
-            return GetABMFDownloadUri(item.Name, item.Version);
-        }
-
-        /// <summary>
-        /// 获取AssetBundle的 .manifest 的下载uri
-        /// </summary>
-        /// <param name="abinfo"></param>
-        /// <returns></returns>
-        private Uri GetABMFDownloadUri(string name, string version)
-        {
-            var uri = new Uri(string.Format("{0}?Name={1}&Version={2}", setting.RemoteAssetBundleDownloadEntry, name + ".manifest", version));
             return uri;
         }
 
