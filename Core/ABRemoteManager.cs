@@ -106,7 +106,7 @@ namespace ABSystem
         /// </summary>
         /// <param name="downloadQueue"></param>
         /// <returns></returns>
-        public long GetDownloadSize()
+        public void GetDownloadSize()
         {
             // 检查各ab包的大小
             long downloadSize = 0;
@@ -123,7 +123,6 @@ namespace ABSystem
             }
             TotalBytes = downloadSize;
             IsCheckSize = true;
-            return downloadSize;
         }
 
         /// <summary>

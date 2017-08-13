@@ -8,10 +8,10 @@ namespace ABSystem
     {
         // 远程管理器和设置
         public ABRemoteSetting RemoteSetting;
-        private ABRemoteManager RemoteManager { get; private set; }
+        private ABRemoteManager remoteManager;
         // 本地管理器和设置
         public ABLocalSetting LocalSetting;
-        private ABLocalManager LocalManager { get; private set; }
+        private ABLocalManager localManager;
         // 是否已经进行过检查标记, 只有检查后, 各属性才有效, 才允许访问
         public bool IsCheck { get; private set; }
 
@@ -27,8 +27,8 @@ namespace ABSystem
         private void Awake()
         {
             Instance = this;
-            LocalManager = new ABLocalManager(LocalSetting);
-            RemoteManager = new ABRemoteManager(RemoteSetting, LocalManager);
+            localManager = new ABLocalManager(LocalSetting);
+            remoteManager = new ABRemoteManager(RemoteSetting, localManager);
         }
 
         /// <summary>
@@ -37,14 +37,14 @@ namespace ABSystem
         public void Check()
         {
             IsCheck = false;
-            localVersion = LocalManager.Version;
-            remoteVersion = RemoteManager.Version;
+            localVersion = localManager.Version;
+            remoteVersion = remoteManager.Version;
             if (!localVersion.Equals(remoteVersion))
             {
                 // 读取本地ab包的清单
-                localAssetBundleList = LocalManager.AseetBundleList;
+                localAssetBundleList = localManager.AseetBundleList;
                 // 读取远程ab包的清单
-                remoteAssetBundleList = RemoteManager.GetAseetBundleList(remoteVersion);
+                remoteAssetBundleList = remoteManager.GetAseetBundleList(remoteVersion);
                 IEnumerable<ABInfo> updateList;
                 if (localAssetBundleList.Count == 0)
                 {
@@ -58,8 +58,8 @@ namespace ABSystem
                                  where localab.HasNewVersion(remoteab) || !localAssetBundleList.Contains(remoteab)
                                  select remoteab; 
                 }
-                RemoteManager.SetDownloadQueue(updateList, remoteVersion);
-                RemoteManager.GetDownloadSize();
+                remoteManager.SetDownloadQueue(updateList, remoteVersion);
+                remoteManager.GetDownloadSize();
             }
             IsCheck = true;
         }
@@ -96,7 +96,7 @@ namespace ABSystem
             get
             {
                 if (!IsCheck) throw new ABUnCheckException("You should call the 'Check' before access any porperty");
-                return RemoteManager.TotalBytes;
+                return remoteManager.TotalBytes;
             }
         }
 
@@ -108,7 +108,7 @@ namespace ABSystem
             get
             {
                 if (!IsCheck) throw new ABUnCheckException("You should call the 'Check' before access any porperty");
-                return (int)(RemoteManager.BytesReceive / RemoteManager.TotalBytes * 100);
+                return (int)(remoteManager.BytesReceive / remoteManager.TotalBytes * 100);
             }
         }
 
@@ -120,7 +120,7 @@ namespace ABSystem
             get
             {
                 if (!IsCheck) throw new ABUnCheckException("You should call the 'Check' before access any porperty");
-                return RemoteManager.CurrentDownloadItem;
+                return remoteManager.CurrentDownloadItem;
             }
         }
 
@@ -129,12 +129,12 @@ namespace ABSystem
             if (HasNewVersion)
             {
                 // 开始下载
-                RemoteManager.StartDownload();
+                remoteManager.StartDownload();
                 // 清空本地不用的ab包
-                LocalManager.Clear(ABUtility.GetDeleteABList(localAssetBundleList, remoteAssetBundleList));
+                localManager.Clear(ABUtility.GetDeleteABList(localAssetBundleList, remoteAssetBundleList));
                 // 写入新的信息文件
-                LocalManager.Version = remoteVersion;
-                LocalManager.AseetBundleList = remoteAssetBundleList;
+                localManager.Version = remoteVersion;
+                localManager.AseetBundleList = remoteAssetBundleList;
             }
         }
 
