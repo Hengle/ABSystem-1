@@ -39,6 +39,7 @@
         public long TotalBytesToReceive; // 总大小
         public long BytesReceived;  // 已经接收的大小
         public long ProgressPercentage; // 进度
+        public string Version;
     }
 
 }

@@ -69,7 +69,7 @@ namespace ABSystem
         /// 设置下载队列
         /// </summary>
         /// <param name="downloadABList"></param>
-        public void SetDownloadQueue(IEnumerable<ABInfo> downloadABList)
+        public void SetDownloadQueue(IEnumerable<ABInfo> downloadABList, string version)
         {
             DownloadQueue = new Queue<ABDownloadItem>();
             foreach (var abinfo in downloadABList)
@@ -77,25 +77,29 @@ namespace ABSystem
                 var abItem = new ABDownloadItem()
                 {
                     Name = abinfo.Name,
-                    Hash = abinfo.Hash
+                    Hash = abinfo.Hash,
+                    Version = version
                 };
                 DownloadQueue.Enqueue(abItem);
                 var abmfItem = new ABDownloadItem()
                 {
                     Name = abinfo.Name + ".manifest",
-                    Hash = abinfo.Hash
+                    Hash = abinfo.Hash,
+                    Version = version
                 };
 
                 DownloadQueue.Enqueue(abmfItem);
             }
             var abMainItem = new ABDownloadItem()
             {
-                Name = "AssetBundles"
+                Name = "AssetBundles",
+                Version = version
             };
             DownloadQueue.Enqueue(abMainItem);
             var abmfMainItem = new ABDownloadItem()
             {
-                Name = "AssetBundles.manifest"
+                Name = "AssetBundles.manifest",
+                Version = version
             };
             DownloadQueue.Enqueue(abmfMainItem);
         }
@@ -130,9 +134,9 @@ namespace ABSystem
         /// </summary>
         /// <param name="abinfo"></param>
         /// <returns></returns>
-        private Uri GetABDownloadUri(ABInfo abinfo)
+        private Uri GetABDownloadUri(ABDownloadItem item)
         {
-            return GetABDownloadUri(abinfo.Name);
+            return GetABDownloadUri(item.Name, item.Version);
         }
 
         /// <summary>
@@ -140,9 +144,9 @@ namespace ABSystem
         /// </summary>
         /// <param name="abinfo"></param>
         /// <returns></returns>
-        private Uri GetABDownloadUri(string name)
+        private Uri GetABDownloadUri(string name, string version)
         {
-            var uri = new Uri(string.Format("{0}?Name={1}", setting.RemoteAssetBundleDownloadEntry, name));
+            var uri = new Uri(string.Format("{0}?Name={1}&Version={2}", setting.RemoteAssetBundleDownloadEntry, name, version));
             return uri;
         }
 
@@ -151,9 +155,9 @@ namespace ABSystem
         /// </summary>
         /// <param name="abinfo"></param>
         /// <returns></returns>
-        private Uri GetABMFDownloadUri(ABInfo abinfo)
+        private Uri GetABMFDownloadUri(ABDownloadItem item)
         {
-            return GetABMFDownloadUri(abinfo.Name);
+            return GetABMFDownloadUri(item.Name, item.Version);
         }
 
         /// <summary>
@@ -161,9 +165,9 @@ namespace ABSystem
         /// </summary>
         /// <param name="abinfo"></param>
         /// <returns></returns>
-        private Uri GetABMFDownloadUri(string name)
+        private Uri GetABMFDownloadUri(string name, string version)
         {
-            var uri = new Uri(string.Format("{0}?Name={1}", setting.RemoteAssetBundleDownloadEntry, name + ".manifest"));
+            var uri = new Uri(string.Format("{0}?Name={1}&Version={2}", setting.RemoteAssetBundleDownloadEntry, name + ".manifest", version));
             return uri;
         }
 

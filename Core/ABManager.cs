@@ -57,7 +57,7 @@ namespace ABSystem
                                  where localab.HasNewVersion(remoteab) || !localAssetBundleList.Contains(remoteab)
                                  select remoteab; 
                 }
-                RemoteManager.SetDownloadQueue(updateList);
+                RemoteManager.SetDownloadQueue(updateList, remoteVersion);
                 downloadSize = RemoteManager.GetDownloadSize();
             }
             IsCheck = true;
