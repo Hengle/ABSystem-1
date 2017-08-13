@@ -3,7 +3,6 @@ using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using System.ComponentModel;
-using UnityEngine;
 
 namespace ABSystem
 {
@@ -20,6 +19,7 @@ namespace ABSystem
         private ABRemoteSetting setting;
         private ABLocalManager localManager;
         private bool IsCheckSize;
+
 
         public Queue<ABDownloadItem> DownloadQueue { get; private set; }
         public ABDownloadItem CurrentDownloadItem { get; private set; }
@@ -52,16 +52,13 @@ namespace ABSystem
         /// <summary>
         /// 远程ab包信息列表
         /// </summary>
-        public List<ABInfo> AseetBundleList
+        public List<ABInfo> GetAseetBundleList(string version)
         {
-            get
+            using (var webClient = new WebClient())
             {
-                using (var webClient = new WebClient())
-                {
-                    Stream stream = webClient.OpenRead(setting.RemoteAssetBundleListURI);
-                    StreamReader sr = new StreamReader(stream);
-                    return ABUtility.JsonToABList(sr.ReadToEnd());
-                }
+                Stream stream = webClient.OpenRead(string.Format("{0}?Version={1}", setting.RemoteAssetBundleListURI, version));
+                StreamReader sr = new StreamReader(stream);
+                return ABUtility.JsonToABList(sr.ReadToEnd());
             }
         }
 

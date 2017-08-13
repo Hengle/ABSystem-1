@@ -43,7 +43,7 @@ namespace ABSystem
                 // 读取本地ab包的清单
                 localAssetBundleList = LocalManager.AseetBundleList;
                 // 读取远程ab包的清单
-                remoteAssetBundleList = RemoteManager.AseetBundleList;
+                remoteAssetBundleList = RemoteManager.GetAseetBundleList(remoteVersion);
                 IEnumerable<ABInfo> updateList;
                 if (localAssetBundleList.Count == 0)
                 {
