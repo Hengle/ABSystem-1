@@ -8,10 +8,10 @@ namespace ABSystem
     {
         // 远程管理器和设置
         public ABRemoteSetting RemoteSetting;
-        public ABRemoteManager RemoteManager { get; private set; }
+        private ABRemoteManager RemoteManager { get; private set; }
         // 本地管理器和设置
         public ABLocalSetting LocalSetting;
-        public ABLocalManager LocalManager { get; private set; }
+        private ABLocalManager LocalManager { get; private set; }
         // 是否已经进行过检查标记, 只有检查后, 各属性才有效, 才允许访问
         public bool IsCheck { get; private set; }
 
@@ -21,7 +21,6 @@ namespace ABSystem
         private string remoteVersion;   // 远程版本号
         private List<ABInfo> localAssetBundleList; // 本地ab包列表
         private List<ABInfo> remoteAssetBundleList;    // 远程ab包列表
-        private long downloadSize;  // 需要下载的大小
 
         public static ABManager Instance;
 
@@ -60,7 +59,7 @@ namespace ABSystem
                                  select remoteab; 
                 }
                 RemoteManager.SetDownloadQueue(updateList, remoteVersion);
-                downloadSize = RemoteManager.GetDownloadSize();
+                RemoteManager.GetDownloadSize();
             }
             IsCheck = true;
         }
@@ -97,7 +96,7 @@ namespace ABSystem
             get
             {
                 if (!IsCheck) throw new ABUnCheckException("You should call the 'Check' before access any porperty");
-                return downloadSize;
+                return RemoteManager.TotalBytes;
             }
         }
 
