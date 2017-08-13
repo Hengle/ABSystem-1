@@ -13,7 +13,9 @@ namespace ABSystem
         public ABLocalSetting LocalSetting;
         public ABLocalManager LocalManager { get; private set; }
         // 是否已经进行过检查标记, 只有检查后, 各属性才有效, 才允许访问
-        public bool IsCheck { get; private set; }   
+        public bool IsCheck { get; private set; }
+
+        public bool AutoUpdate = true;
 
         private string localVersion;   // 本地版本号
         private string remoteVersion;   // 远程版本号
@@ -139,8 +141,11 @@ namespace ABSystem
 
         private void Start()
         {
-            Check();
-            UpdateToNew();
+            if(AutoUpdate)
+            {
+                Check();
+                UpdateToNew();
+            }
         }
 
     }
