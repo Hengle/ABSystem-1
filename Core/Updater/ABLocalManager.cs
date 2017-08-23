@@ -3,7 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using LitJson;
 using UnityEngine;
-using ABSystem.Data;
+using ABSystem.Inner.Date;
 
 namespace ABSystem
 {
@@ -24,21 +24,21 @@ namespace ABSystem
         /// </summary>
         private class ABLocalManager
         {
-            private string localAssetBundlePath;
+            public string LocalAssetBundlePath { get; private set; }
             private string versionPath;
             private string assetBundleListPath;
 
             public ABLocalManager(ABLocalSetting setting)
             {
                 // 初始化储存目录
-                localAssetBundlePath = Path.Combine(Application.persistentDataPath, setting.AssetBundlePath);
-                DirectoryInfo dir = new DirectoryInfo(localAssetBundlePath);
+                LocalAssetBundlePath = Path.Combine(Application.persistentDataPath, setting.AssetBundlePath);
+                DirectoryInfo dir = new DirectoryInfo(LocalAssetBundlePath);
                 if (!dir.Exists) dir.Create();
                 // 初始化Version.json文件
-                versionPath = Path.Combine(localAssetBundlePath, "Version.json");
+                versionPath = Path.Combine(LocalAssetBundlePath, "Version.json");
                 if (!File.Exists(versionPath)) Version = setting.DefaultVersion;
                 // 初始化ResourceList.json文件
-                assetBundleListPath = Path.Combine(localAssetBundlePath, "ResourceList.json");
+                assetBundleListPath = Path.Combine(LocalAssetBundlePath, "ResourceList.json");
                 if (!File.Exists(assetBundleListPath)) AseetBundleList = new List<ABInfo>();
             }
 
@@ -92,29 +92,6 @@ namespace ABSystem
             }
 
             /// <summary>
-            /// 给定一个文件名, 尝试创建该文件所需的目录, 并返回包含文件名的完整路径
-            /// </summary>
-            /// <param name="path"></param>
-            /// <returns></returns>
-            public string TryCreateDirectory(ABInfo abinfo)
-            {
-                return TryCreateDirectory(abinfo.Name);
-            }
-
-            /// <summary>
-            /// 给定一个文件名, 尝试创建该文件所需的目录, 并返回包含文件名的完整路径
-            /// </summary>
-            /// <param name="path"></param>
-            /// <returns></returns>
-            public string TryCreateDirectory(string path)
-            {
-                string filePath = Path.Combine(localAssetBundlePath, path);
-                DirectoryInfo dir = new DirectoryInfo(Path.GetDirectoryName(filePath));
-                if (!dir.Exists) dir.Create();
-                return filePath;
-            }
-
-            /// <summary>
             /// 清除不再使用的ab包
             /// </summary>
             /// <param name="deleteList"></param>
@@ -123,14 +100,12 @@ namespace ABSystem
                 var deleteList = ABUtility.GetDeleteABList(oldList, newList);
                 foreach (var name in deleteList)
                 {
-                    File.Delete(Path.Combine(localAssetBundlePath, name));
-                    File.Delete(Path.Combine(localAssetBundlePath, name + ".manifest"));
+                    File.Delete(Path.Combine(LocalAssetBundlePath, name));
+                    File.Delete(Path.Combine(LocalAssetBundlePath, name + ".manifest"));
                 }
                 // 清除空目录
-                ABUtility.ClearEmtry(localAssetBundlePath);
+                ABUtility.ClearEmtry(LocalAssetBundlePath);
             }
-
-            
 
         }   // end class
 

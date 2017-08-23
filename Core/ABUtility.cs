@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LitJson;
 using UnityEngine;
-using ABSystem.Data;
+using ABSystem.Inner.Date;
 
 namespace ABSystem
 {
@@ -79,7 +79,7 @@ namespace ABSystem
         }
 
         /// <summary>
-        /// 清除根目录下的所有空目录
+        /// 清除指定目录下的所有空目录
         /// </summary>
         /// <param name="rootPath"></param>
         public static void ClearEmtry(string rootPath)
@@ -91,6 +91,31 @@ namespace ABSystem
                 FileSystemInfo[] subFiles = subDir.GetFileSystemInfos();
                 if (subFiles.Length == 0) subDir.Delete();
             }
+        }
+
+        /// <summary>
+        /// 给定一个文件名, 尝试创建该文件所需的目录, 并返回包含文件名的完整路径
+        /// </summary>
+        /// <param name="abinfo"></param>
+        /// <param name="localAssetBundlePath"></param>
+        /// <returns></returns>
+        public static string TryCreateDirectory(ABInfo abinfo, string localAssetBundlePath)
+        {
+            return TryCreateDirectory(abinfo.Name, localAssetBundlePath);
+        }
+
+        /// <summary>
+        /// 给定一个文件名, 尝试创建该文件所需的目录, 并返回包含文件名的完整路径
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="localAssetBundlePath"></param>
+        /// <returns></returns>
+        public static string TryCreateDirectory(string filename, string localAssetBundlePath)
+        {
+            var filePath = Path.Combine(localAssetBundlePath, filename);
+            DirectoryInfo dir = new DirectoryInfo(Path.GetDirectoryName(filePath));
+            if (!dir.Exists) dir.Create();
+            return filePath;
         }
 
     }

@@ -3,7 +3,7 @@ using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using System.ComponentModel;
-using ABSystem.Data;
+using ABSystem.Inner.Date;
 
 namespace ABSystem
 {
@@ -31,13 +31,13 @@ namespace ABSystem
             public long BytesReceive { get; private set; }
 
             private ABRemoteSetting setting;
-            private ABLocalManager localManager;
+            private string localAssetBundlePath;
             private bool IsCheckSize;
 
-            public ABRemoteManager(ABRemoteSetting setting, ABLocalManager localManager)
+            public ABRemoteManager(ABRemoteSetting setting, string localAssetBundlePath)
             {
                 this.setting = setting;
-                this.localManager = localManager;
+                this.localAssetBundlePath = localAssetBundlePath;
             }
 
             /// <summary>
@@ -208,7 +208,7 @@ namespace ABSystem
             private void Download()
             {
                 var abUri = GetABDownloadUri(CurrentDownloadItem);
-                var abPath = localManager.TryCreateDirectory(CurrentDownloadItem);
+                var abPath = ABUtility.TryCreateDirectory(CurrentDownloadItem, localAssetBundlePath);
                 using (var webClient = new WebClient())
                 {
                     webClient.DownloadFileCompleted += ABDownloadCompleted;

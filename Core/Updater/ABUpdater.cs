@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using ABSystem.Inner.Date;
+using System.Collections.Generic;
 using System.Linq;
-using ABSystem.Data;
 
 namespace ABSystem
 {
@@ -27,9 +27,8 @@ namespace ABSystem
         public ABUpdater(ABRemoteSetting remoteSetting, ABLocalSetting localSetting)
         {
             localManager = new ABLocalManager(localSetting);
-            remoteManager = new ABRemoteManager(remoteSetting, localManager);
+            remoteManager = new ABRemoteManager(remoteSetting, localManager.LocalAssetBundlePath);
         }
-
 
         /// <summary>
         /// 检查, 并进行属性数据更新
