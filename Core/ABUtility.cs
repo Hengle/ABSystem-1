@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using LitJson;
@@ -76,6 +76,21 @@ namespace ABSystem
                              where !nl.Contains(o)
                              select o;
             return deleteList;
+        }
+
+        /// <summary>
+        /// 清除根目录下的所有空目录
+        /// </summary>
+        /// <param name="rootPath"></param>
+        public static void ClearEmtry(string rootPath)
+        {
+            DirectoryInfo dir = new DirectoryInfo(rootPath);
+            DirectoryInfo[] dirs = dir.GetDirectories("*", SearchOption.AllDirectories);
+            foreach (DirectoryInfo subDir in dirs)
+            {
+                FileSystemInfo[] subFiles = subDir.GetFileSystemInfos();
+                if (subFiles.Length == 0) subDir.Delete();
+            }
         }
 
     }

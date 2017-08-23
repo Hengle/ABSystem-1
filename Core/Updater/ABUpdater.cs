@@ -4,7 +4,10 @@ using UnityEngine;
 
 namespace ABSystem
 {
-    public class ABManager : MonoBehaviour
+    /// <summary>
+    /// 更新器
+    /// </summary>
+    public partial class ABUpdater : MonoBehaviour
     {
         // 远程管理器和设置
         public ABRemoteSetting RemoteSetting;
@@ -22,13 +25,22 @@ namespace ABSystem
         private List<ABInfo> localAssetBundleList; // 本地ab包列表
         private List<ABInfo> remoteAssetBundleList;    // 远程ab包列表
 
-        public static ABManager Instance;
+        public static ABUpdater Instance;
 
         private void Awake()
         {
             Instance = this;
             localManager = new ABLocalManager(LocalSetting);
             remoteManager = new ABRemoteManager(RemoteSetting, localManager);
+        }
+
+        private void Start()
+        {
+            if (AutoUpdate)
+            {
+                Check();
+                UpdateToNew();
+            }
         }
 
         /// <summary>
@@ -131,19 +143,10 @@ namespace ABSystem
                 // 开始下载
                 remoteManager.StartDownload();
                 // 清空本地不用的ab包
-                localManager.Clear(ABUtility.GetDeleteABList(localAssetBundleList, remoteAssetBundleList));
+                localManager.Clear(localAssetBundleList, remoteAssetBundleList);
                 // 写入新的信息文件
                 localManager.Version = remoteVersion;
                 localManager.AseetBundleList = remoteAssetBundleList;
-            }
-        }
-
-        private void Start()
-        {
-            if(AutoUpdate)
-            {
-                Check();
-                UpdateToNew();
             }
         }
 

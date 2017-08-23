@@ -73,7 +73,7 @@ namespace ABSystem
                 {
                     CreateResourceListJsonFile(manifest);
                     CreateVersionJsonFile();
-                    ABLocalManager.ClearEmtry(OutputPath);
+                    ABUtility.ClearEmtry(OutputPath);
                 }
                 else
                 {
@@ -99,7 +99,7 @@ namespace ABSystem
                         File.Delete(Path.Combine(OutputPath, name));
                         File.Delete(Path.Combine(OutputPath, name + ".manifest"));
                     }
-                    ABLocalManager.ClearEmtry(OutputPath);
+                    ABUtility.ClearEmtry(OutputPath);
                 }
                 else
                 {
