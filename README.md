@@ -83,9 +83,9 @@
 * * *
 
 ## API
-> 如果你需要进度条, 或者在更新前提示用户需要下载内容的大小, 并给出一个更新按钮的功能, 你可能需要自己写, 但是ABSystem也提供了一下API可供使用.  
-这些API都由ABSystem命名空间下的ABManager提供, 其作为Unity中的单例模式存在, 所以在使用这些API时, 你依然需要将ABSystem的预制体放入场景中, 并做好设置, 不同的是, 现在不需要启动AutoUpdate的功能. 
+> 如果你需要进度条, 或者在更新前提示用户需要下载内容的大小, 并给出一个更新按钮的功能, 你可能需要自己写, 但是ABSystem也提供了一下API可供使用. 这些API暂时都由ABSystem命名空间下的ABManager.Updater提供, 其中, ABManager作为Unity中的单例模式存在, 所以在使用这些API时, 你依然需要将ABSystem的预制体放入场景中, 并做好设置, 不同的是, 现在不需要启动Auto Update的功能. 
 
+#### ABManger.Updater.*
 * Check()
 > 检查, 进行各种属性的设置, 在第一次访问其他属性前, 必须先调用这个方法. 否则将抛出ABUnCheckException. 注意, 下面访问各属性时, 可能得到的是旧数据, 为了确保得到的新数据, 你需要先调用Check()方法, Check()方法会对所有的属性进行更新.
 
