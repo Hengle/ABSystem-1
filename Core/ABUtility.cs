@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LitJson;
 using UnityEngine;
-
+using ABSystem.Data;
 
 namespace ABSystem
 {

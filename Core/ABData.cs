@@ -1,45 +1,49 @@
 ﻿namespace ABSystem
 {
-    public class ABVersion
+    namespace Data
     {
-        public string Version;
-    }
-
-    public class ABInfo
-    {
-        public string Name;
-        public string Hash;
-
-        public bool HasNewVersion(ABInfo abinfo)
+        public class ABVersion
         {
-            return Name == abinfo.Name && Hash != abinfo.Hash;
+            public string Version;
         }
 
-        public override bool Equals(object obj)
+        public class ABInfo
         {
-            if (obj == null) return false;
-            ABInfo other = obj as ABInfo;
-            if (obj == null) return false;
-            return Name.Equals(other.Name) && Hash.Equals(other.Hash);
+            public string Name;
+            public string Hash;
+
+            public bool HasNewVersion(ABInfo abinfo)
+            {
+                return Name == abinfo.Name && Hash != abinfo.Hash;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj == null) return false;
+                ABInfo other = obj as ABInfo;
+                if (obj == null) return false;
+                return Name.Equals(other.Name) && Hash.Equals(other.Hash);
+            }
+
+            public override int GetHashCode()
+            {
+                return base.GetHashCode();
+            }
+
+            public override string ToString()
+            {
+                return string.Format("{0}: {1}", Name, Hash);
+            }
         }
 
-        public override int GetHashCode()
+        public class ABDownloadItem : ABInfo
         {
-            return base.GetHashCode();
+            public long TotalBytesToReceive; // 总大小
+            public long BytesReceived;  // 已经接收的大小
+            public long ProgressPercentage; // 进度
+            public string Version;
         }
 
-        public override string ToString()
-        {
-            return string.Format("{0}: {1}", Name, Hash);
-        }
-    }
-
-    public class ABDownloadItem : ABInfo
-    {
-        public long TotalBytesToReceive; // 总大小
-        public long BytesReceived;  // 已经接收的大小
-        public long ProgressPercentage; // 进度
-        public string Version;
-    }
+    } // end namespace
 
 }

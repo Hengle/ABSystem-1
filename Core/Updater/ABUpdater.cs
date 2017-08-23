@@ -1,24 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using ABSystem.Data;
 
 namespace ABSystem
 {
     /// <summary>
     /// 更新器
     /// </summary>
-    public partial class ABUpdater : MonoBehaviour
+    public partial class ABUpdater
     {
-        // 远程管理器和设置
-        public ABRemoteSetting RemoteSetting;
-        private ABRemoteManager remoteManager;
-        // 本地管理器和设置
-        public ABLocalSetting LocalSetting;
-        private ABLocalManager localManager;
         // 是否已经进行过检查标记, 只有检查后, 各属性才有效, 才允许访问
         public bool IsCheck { get; private set; }
 
-        public bool AutoUpdate = true;
+        // 远程管理器和设置
+        private ABRemoteManager remoteManager;
+        // 本地管理器和设置
+        private ABLocalManager localManager;
 
         private string localVersion;   // 本地版本号
         private string remoteVersion;   // 远程版本号
@@ -27,21 +24,12 @@ namespace ABSystem
 
         public static ABUpdater Instance;
 
-        private void Awake()
+        public ABUpdater(ABRemoteSetting remoteSetting, ABLocalSetting localSetting)
         {
-            Instance = this;
-            localManager = new ABLocalManager(LocalSetting);
-            remoteManager = new ABRemoteManager(RemoteSetting, localManager);
+            localManager = new ABLocalManager(localSetting);
+            remoteManager = new ABRemoteManager(remoteSetting, localManager);
         }
 
-        private void Start()
-        {
-            if (AutoUpdate)
-            {
-                Check();
-                UpdateToNew();
-            }
-        }
 
         /// <summary>
         /// 检查, 并进行属性数据更新
@@ -136,18 +124,15 @@ namespace ABSystem
             }
         }
 
-        public void UpdateToNew()
+        public void StartUpdate()
         {
-            if (HasNewVersion)
-            {
-                // 开始下载
-                remoteManager.StartDownload();
-                // 清空本地不用的ab包
-                localManager.Clear(localAssetBundleList, remoteAssetBundleList);
-                // 写入新的信息文件
-                localManager.Version = remoteVersion;
-                localManager.AseetBundleList = remoteAssetBundleList;
-            }
+            // 开始下载
+            remoteManager.StartDownload();
+            // 清空本地不用的ab包
+            localManager.Clear(localAssetBundleList, remoteAssetBundleList);
+            // 写入新的信息文件
+            localManager.Version = remoteVersion;
+            localManager.AseetBundleList = remoteAssetBundleList;
         }
 
     }
