@@ -26,7 +26,7 @@
 
 * Remote Asset Bundle List URI:
 
-> 获得远程版本的AB包列表的信息, 将使用HTTP的GET方法请求该URI, 其在请求时会带有Version的请求参数, 例如: **ABList?Version=1.0.0**. 要求返回一个Json数组, 数组中的每一项表示一个AB包的信息, 例如:**[{"NAME1": "HASH1"}, {"NAME2": "HASH2"}]**. 每个Json对象的键为AB包的名称, 值为AB包的哈希值.
+> 获得远程版本的AB包列表的信息, 将使用HTTP的GET方法请求该URI, 其在请求时会带有Version的请求参数, 例如: **ABList?Version=1.0.0**. 要求返回一个Json数组, 数组中的每一项表示一个AB包的信息, 例如: **[{"NAME1": "HASH1"}, {"NAME2": "HASH2"}]** . 每个Json对象的键为AB包的名称, 值为AB包的哈希值.
 
 * Remote Asset Bundle Download Entry:
 
